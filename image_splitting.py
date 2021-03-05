@@ -1,6 +1,6 @@
 ### Daniel Vogler and Philipp Schaedle
 ###
-### divide pictures into subcategory folders
+### split pictures into subcategory folders
 
 import os
 import sys
