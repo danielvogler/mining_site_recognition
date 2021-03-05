@@ -8,4 +8,6 @@ Recognize mining sites from satellite data.
 - image_splitting.py: Split data sets into train/valid/test
 - load_classification.py: Load all saved model data and plot results
 - save_augemented_images: To enable the writing of augmented images for inspection
-- assign_GID_database.py: Rename tifs image files and assign global identifier 
+- assign_GID_database.py: Rename tifs image files and assign global identifier
+- restructure_GID_database.py: Restructure the database and dissect the global identifiers into columns
+ 
