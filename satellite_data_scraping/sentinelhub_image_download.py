@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDownloadClient, \
     DataCollection, bbox_to_dimensions, DownloadRequest
 
+
 ### lon,lat of lower left and upper right corner
 koolan_island_openpit = [123.7,-16.2, 123.8, -16.1]
 
@@ -41,57 +42,53 @@ def plot_image(image, factor=1.0, clip_range = None, **kwargs):
     ax.set_xticks([])
     ax.set_yticks([])
 
-### pull true color image
-evalscript_true_color = """
-    //VERSION=3
 
-    function setup() {
-        return {
-            input: [{
-                bands: ["B02", "B03", "B04"]
-            }],
-            output: {
-                bands: 3
-            }
-        };
-    }
+### construct sample order for sentinel request string
+def construct_band_str(bands):
+    band_str = "sample.%s" %bands[-1]
 
-    function evaluatePixel(sample) {
-        return [sample.B04, sample.B03, sample.B02];
-    }
-"""
+    for i in range(1,len(bands)):
+        band_str += ", sample.%s" % bands[-1-i]
 
-### initialize sentinelhub request
-request_true_color = SentinelHubRequest(
-    evalscript=evalscript_true_color,
-    input_data=[
-        SentinelHubRequest.input_data(
-            data_collection=DataCollection.SENTINEL2_L1C,
-            time_interval=('2020-06-12', '2020-06-13'),
-        )
-    ],
-    responses=[
-        SentinelHubRequest.output_response('default', MimeType.PNG)
-    ],
-    bbox=koolan_island_bbox,
-    size=koolan_island_size,
-    config=config
-)
-
-### download data
-true_color_imgs = request_true_color.get_data()
+    return band_str
 
 
-print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
-print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
+### create evaluation script according to requested bands
+def evaluation_script(bands):
+
+    band_str = construct_band_str(bands)
+
+    evalscript = """
+        //VERSION=3
+
+        function setup() {
+            return {
+                input: [{
+                    bands: %s
+                }],
+                output: {
+                    bands: %i
+                }
+            };
+        }
+
+        function evaluatePixel(sample) {
+            return [%s];
+        }
+    """ % (bands, len(bands), band_str)
+
+    return evalscript
 
 
-image = true_color_imgs[0]
-print(f'Image type: {image.dtype}')
+### set bands and create evaluation string
+bands = ["B02", "B03", "B04"]
+bands = ["B06", "B08", "B11"]
 
-### image request with least cloud cover
-request_true_color = SentinelHubRequest(
-    evalscript=evalscript_true_color,
+evalscript = evaluation_script(bands)
+
+### image request with ir bands
+request_color = SentinelHubRequest(
+    evalscript=evalscript,
     input_data=[
         SentinelHubRequest.input_data(
             data_collection=DataCollection.SENTINEL2_L1C,
@@ -108,5 +105,15 @@ request_true_color = SentinelHubRequest(
 )
 
 ### plot image with least cloud cover
-plot_image(request_true_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
+# plot_image(request_true_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
+plot_image(request_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
 plt.show()
+
+### download data
+true_color_imgs = request_color.get_data()
+
+print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
+print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
+
+image = true_color_imgs[0]
+print(f'Image type: {image.dtype}')
