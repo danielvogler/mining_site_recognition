@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import pandas
 import math
 import importlib
+from random import randrange
 
 from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDownloadClient, \
     DataCollection, bbox_to_dimensions, DownloadRequest
@@ -43,6 +44,7 @@ resolution = cnfg.resolution
 bb_size = cnfg.bb_size
 save_to = cnfg.save_to
 region_id = cnfg.region_id
+categories = cnfg.categories
 
 ### coordinates to load
 ml = pandas.read_csv(mining_locations)
@@ -190,25 +192,32 @@ def request_image(lat,lon,bands,resolution,bb_size,file_str):
 # loop over the mine locations
 for i in range(len(ml['Latitude'])):
 
-    ### lon,lat of lower left and upper right corner
-    lat = ml['Latitude'].iloc[i]
-    lon = ml['Longitude'].iloc[i]
+    ### mines and non-mines
+    for j in categories:
 
-    ### options for mine/non-mine
-    mine_id = "1"
-    ### count images in region
-    file_id = str(i).zfill(4)
-    ### gid string for database
-    gid_str = construct_gid_str(save_to, mine_id, bands_id, bb_size, region_id, file_id)
+        ### lon,lat of lower left and upper right corner
+        lat = ml['Latitude'].iloc[i]
+        lon = ml['Longitude'].iloc[i]
+
+        if j == 0:
+            lat += randrange(20,100)*(-1)**randrange(2)/100
+            lon += randrange(20,100)*(-1)**randrange(2)/100
+
+        ### options for mine/non-mine
+        mine_id = str(j)
+        ### count images in region
+        file_id = str(i).zfill(4)
+        ### gid string for database
+        gid_str = construct_gid_str(save_to, mine_id, bands_id, bb_size, region_id, file_id)
 
 
-    file_str = str( gid_str + \
-        file_id + \
-        "_-_lat" + \
-        str("{:.6f}".format(lat)) + \
-        "_lon" + \
-        str("{:.6f}".format(lon)) + \
-        ".png")
-    
-    ### load image specified by bb
-    request_image(lat, lon, bands, resolution, bb_size, file_str)
+        file_str = str( gid_str + \
+            file_id + \
+            "_-_lat" + \
+            str("{:.6f}".format(lat)) + \
+            "_lon" + \
+            str("{:.6f}".format(lon)) + \
+            ".png")
+        
+        ### load image specified by bb
+        request_image(lat, lon, bands, resolution, bb_size, file_str)

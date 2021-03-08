@@ -17,10 +17,13 @@ bands = ["B06", "B08", "B11"]
 resolution = 10
 
 ### window bounding box size [m]
-bb_size = 1000
+bb_size = 4000
 
 ### region identifier: operating_mines (a), NT (b), QLD (c), WA (d), S_WA (z)
 region_id = 'd'
+
+### do non-mine images as well: (1) yes; (0) no
+categories = [0, 1]
 
 ### save folder
 save_to = "../../mining_site_recognition_internal/mining_locations/mining_location_image_files/mining_database_-_western_australia_reduced/"
