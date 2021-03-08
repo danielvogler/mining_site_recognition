@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas
 import math
+import importlib
 
 from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDownloadClient, \
     DataCollection, bbox_to_dimensions, DownloadRequest
@@ -23,32 +24,33 @@ from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDown
 Settings
 '''
 
+### load username
+un = os.getlogin()
+
+### check for local config file
+try:
+    cnfg = importlib.import_module( str("image_config_"+un) )
+
+### otherwise use global repo config
+except:
+    cnfg = importlib.import_module("image_config")
+
+### load config
+mining_locations = cnfg.mining_locations
+bands = cnfg.bands
+resolution = cnfg.resolution
+bb_size = cnfg.bb_size
+
 ### coordinates to load
-mining_locations = '../../mining_site_recognition_internal/mining_locations/mining_location_coordinate_files/mining_database_-_western_australia_reduced_coord.csv'
 ml = pandas.read_csv(mining_locations)
-
-### set bands and create evaluation string
-bands = ["B02", "B03", "B04"]
-bands = ["B06", "B08", "B11"]
-
-# size of bounding box for image sampling
-image_bb_size = 0.0166*2
-
-### image resolution in m
-resolution = 10
-
-### window bounding box size [m]
-bb_size = 1000
 
 
 ### compute bounding box in degree lat/lon
 def bounding_box(lat,lon,bb_size):
 
-    ### earth radius
-    R = 6378.137
-
     ### distance for 1 degree at given latitude
-    delta_lat = 111132.954 - 559.822*math.cos(2*math.radians(lat)) + 1.175*math.cos(4*math.radians(lat))
+    delta_lat = 111132.954 - 559.822*math.cos(2*math.radians(lat)) \
+                + 1.175*math.cos(4*math.radians(lat))
 
     ### distance for 1 degree at given longitude
     delta_lon = 111132.954 * math.cos( math.radians(lat) )
@@ -66,9 +68,11 @@ def bounding_box(lat,lon,bb_size):
 
 ### image plotting function
 def plot_image(image, factor=1.0, clip_range = None, **kwargs):
+
     """
     Utility function for plotting RGB images.
     """
+
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 15))
     if clip_range is not None:
         ax.imshow(np.clip(image * factor, *clip_range), **kwargs)
@@ -170,4 +174,4 @@ for i in range(len(ml['Latitude'])):
     lon = ml['Longitude'].iloc[i]
     
     ### load image specified by bb
-    request_image(lat,lon,bands,resolution,bb_size)
+    request_image(lat, lon, bands, resolution,bb_size)
