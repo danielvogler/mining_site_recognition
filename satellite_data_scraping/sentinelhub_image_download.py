@@ -1,5 +1,6 @@
+### daniel vogler
 ### sentinelhub satellite data download
-### https://sentinelhub-py.readthedocs.io
+### additonal info at https://sentinelhub-py.readthedocs.io
 
 from sentinelhub import SHConfig
 
@@ -12,22 +13,56 @@ import os
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas
+import math
 
 from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDownloadClient, \
     DataCollection, bbox_to_dimensions, DownloadRequest
 
+'''
+Settings
+'''
 
-### lon,lat of lower left and upper right corner
-koolan_island_openpit = [123.7,-16.2, 123.8, -16.1]
+### coordinates to load
+mining_locations = '../../mining_site_recognition_internal/mining_locations/mining_location_coordinate_files/mining_database_-_western_australia_reduced_coord.csv'
+ml = pandas.read_csv(mining_locations)
+
+### set bands and create evaluation string
+bands = ["B02", "B03", "B04"]
+bands = ["B06", "B08", "B11"]
+
+# size of bounding box for image sampling
+image_bb_size = 0.0166*2
 
 ### image resolution in m
 resolution = 10
 
-### define geometry
-koolan_island_bbox = BBox(bbox=koolan_island_openpit, crs=CRS.WGS84)
-koolan_island_size = bbox_to_dimensions(koolan_island_bbox, resolution=resolution)
+### window bounding box size [m]
+bb_size = 1000
 
-print(f'Image shape at {resolution} m resolution: {koolan_island_size} pixels')
+
+### compute bounding box in degree lat/lon
+def bounding_box(lat,lon,bb_size):
+
+    ### earth radius
+    R = 6378.137
+
+    ### distance for 1 degree at given latitude
+    delta_lat = 111132.954 - 559.822*math.cos(2*math.radians(lat)) + 1.175*math.cos(4*math.radians(lat))
+
+    ### distance for 1 degree at given longitude
+    delta_lon = 111132.954 * math.cos( math.radians(lat) )
+
+    ### degree for given bounding box size
+    bb_size_lat = bb_size / delta_lat
+    bb_size_lon = bb_size / delta_lon
+
+    ### Set image geometry
+    bounding_box = [lon-bb_size_lon/2.0,lat-bb_size_lat/2.0, 
+        lon+bb_size_lon/2.0,lat+bb_size_lat/2.0]
+
+    return bounding_box
+
 
 ### image plotting function
 def plot_image(image, factor=1.0, clip_range = None, **kwargs):
@@ -80,40 +115,59 @@ def evaluation_script(bands):
     return evalscript
 
 
-### set bands and create evaluation string
-bands = ["B02", "B03", "B04"]
-bands = ["B06", "B08", "B11"]
+### request image data from sentinelhub
+def request_image(lat,lon,bands,resolution,bb_size):
 
-evalscript = evaluation_script(bands)
+    ### bounding box at lat/lon
+    image_geometry = bounding_box(lat, lon, bb_size)
 
-### image request with ir bands
-request_color = SentinelHubRequest(
-    evalscript=evalscript,
-    input_data=[
-        SentinelHubRequest.input_data(
-            data_collection=DataCollection.SENTINEL2_L1C,
-            time_interval=('2020-06-01', '2020-06-30'),
-            mosaicking_order='leastCC'
-        )
-    ],
-    responses=[
-        SentinelHubRequest.output_response('default', MimeType.PNG)
-    ],
-    bbox=koolan_island_bbox,
-    size=koolan_island_size,
-    config=config
-)
+    ### define image geometry
+    image_bbox = BBox(bbox=image_geometry, crs=CRS.WGS84)
+    image_size = bbox_to_dimensions(image_bbox, resolution=resolution)
 
-### plot image with least cloud cover
-# plot_image(request_true_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
-plot_image(request_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
-plt.show()
+    print(f'Image shape at {resolution} m resolution: {image_size} pixels')
 
-### download data
-true_color_imgs = request_color.get_data()
+    ### bands to use
+    evalscript = evaluation_script(bands)
 
-print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
-print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
+    ### image request with ir bands
+    request_color = SentinelHubRequest(
+        evalscript=evalscript,
+        input_data=[
+            SentinelHubRequest.input_data(
+                data_collection=DataCollection.SENTINEL2_L1C,
+                time_interval=('2020-06-01', '2020-06-30'),
+                mosaicking_order='leastCC'
+            )
+        ],
+        responses=[
+            SentinelHubRequest.output_response('default', MimeType.PNG)
+        ],
+        bbox=image_bbox,
+        size=image_size,
+        config=config
+    )
 
-image = true_color_imgs[0]
-print(f'Image type: {image.dtype}')
+    ### plot image with least cloud cover
+    plot_image(request_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
+    plt.show()
+
+    ### download data
+    true_color_imgs = request_color.get_data()
+
+    print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
+    print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
+
+    image = true_color_imgs[0]
+    print(f'Image type: {image.dtype}')
+
+
+# loop over the mine locations
+for i in range(len(ml['Latitude'])):
+
+    ### lon,lat of lower left and upper right corner
+    lat = ml['Latitude'].iloc[i]
+    lon = ml['Longitude'].iloc[i]
+    
+    ### load image specified by bb
+    request_image(lat,lon,bands,resolution,bb_size)
