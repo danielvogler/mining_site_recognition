@@ -7,8 +7,8 @@ mining_locations = '../../mining_site_recognition_internal/mining_locations/mini
 
 ### set bands and create evaluation string
 ### band combination identifier (0)
-bands_id = 0
-bands = ["B02", "B03", "B04"]
+# bands_id = 0
+# bands = ["B02", "B03", "B04"]
 ### band combination identifier (1)
 bands_id = 1
 bands = ["B06", "B08", "B11"]

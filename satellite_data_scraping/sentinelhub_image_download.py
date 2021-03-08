@@ -17,9 +17,13 @@ import pandas
 import math
 import importlib
 from random import randrange
+from PIL import Image
+from datetime import datetime
 
 from sentinelhub import MimeType, CRS, BBox, SentinelHubRequest, SentinelHubDownloadClient, \
     DataCollection, bbox_to_dimensions, DownloadRequest
+
+start_time = datetime.now()
 
 '''
 Settings
@@ -92,17 +96,9 @@ def bounding_box(lat,lon,bb_size):
 ### image plotting function
 def plot_image(image, factor=1.0, clip_range = None, **kwargs):
 
-    """
-    Utility function for plotting RGB images.
-    """
-
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 15))
-    if clip_range is not None:
-        ax.imshow(np.clip(image * factor, *clip_range), **kwargs)
-    else:
-        ax.imshow(image * factor, **kwargs)
-    ax.set_xticks([])
-    ax.set_yticks([])
+    fig = plt.figure()
+    plt.axis('off')
+    plt.imshow(image * factor)
 
 
 ### construct sample order for sentinel request string
@@ -151,8 +147,12 @@ def request_image(lat,lon,bands,resolution,bb_size,file_str):
     ### define image geometry
     image_bbox = BBox(bbox=image_geometry, crs=CRS.WGS84)
     image_size = bbox_to_dimensions(image_bbox, resolution=resolution)
+    ### make sure image is same length on each side
+    image_size_ave = int((image_size[0] + image_size[1])/2)
+    image_size = (image_size_ave, image_size_ave)
+    image_size = ( int(bb_size/resolution), int(bb_size/resolution) )
 
-    print(f'Image shape at {resolution} m resolution: {image_size} pixels')
+    print(f'Image shape at {resolution}m resolution: {image_size} pixels')
 
     ### bands to use
     evalscript = evaluation_script(bands)
@@ -163,7 +163,7 @@ def request_image(lat,lon,bands,resolution,bb_size,file_str):
         input_data=[
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L1C,
-                time_interval=('2020-06-01', '2020-06-30'),
+                time_interval=('2020-06-01', '2020-12-30'),
                 mosaicking_order='leastCC'
             )
         ],
@@ -176,21 +176,25 @@ def request_image(lat,lon,bands,resolution,bb_size,file_str):
     )
 
     ### plot image with least cloud cover
-    plot_image(request_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
-    plt.savefig(file_str,pad_inches=0,bbox_inches='tight')
+    # plot_image(request_color.get_data()[0], factor=3.5/255, clip_range=(0,1))
+    # plt.savefig(file_str,bbox_inches='tight',pad_inches = 0)
 
     ### download data
     true_color_imgs = request_color.get_data()
-
-    print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
-    print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
-
     image = true_color_imgs[0]
-    print(f'Image type: {image.dtype}')
+
+    # print(f'Returned data is of type = {type(true_color_imgs)} and length {len(true_color_imgs)}.')
+    # print(f'Single element in the list is of type {type(true_color_imgs[-1])} and has shape {true_color_imgs[-1].shape}')
+    # print(f'Image type: {image.dtype}')
+
+    image = Image.fromarray(image)
+    image.save(file_str)
 
 
 # loop over the mine locations
 for i in range(len(ml['Latitude'])):
+
+    print("\nLoading coordinates:", i+1)
 
     ### mines and non-mines
     for j in categories:
@@ -221,3 +225,5 @@ for i in range(len(ml['Latitude'])):
         
         ### load image specified by bb
         request_image(lat, lon, bands, resolution, bb_size, file_str)
+
+print("\nTotal execution time:", datetime.now() - start_time)
