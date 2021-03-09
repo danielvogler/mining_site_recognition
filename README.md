@@ -13,6 +13,7 @@ Recognize mining sites from satellite data. Download images of satellite data fr
 * **satellite_data_scraping/**
   * image_config.py: Settings for images
   * sentinelhub_image_download.py: Download images via sentinelhub
+  * sh_config_username.py: Example configuration file
 * **utils/**
   * bulk_conversion.py: Conversion of satelite data from .tif to .png
   * image_splitting.py: Split data sets into train/valid/test
