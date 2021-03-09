@@ -35,6 +35,7 @@ if mainDir != baseDir:
     projectImages = str( str(mainDir) + "/")
     trainingImages = str(projectImages + "training/")
     testingImages = str(projectImages + "testing/")
+    validationImages = str(projectImages + "validation/")
     augmentedImages = str(projectImages + "training/")
 
 
@@ -104,7 +105,7 @@ training_set = train_datagen.flow_from_directory(
 
 ### generate VALIDATION dataset based on augmentation parameters
 validation_set = validation_datagen.flow_from_directory(
-    testingImages,
+    validationImages,
     target_size = target_size,
     batch_size = batch_size,
     class_mode = class_mode,

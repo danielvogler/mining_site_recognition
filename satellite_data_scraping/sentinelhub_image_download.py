@@ -52,7 +52,7 @@ categories = cnfg.categories
 
 ### coordinates to load
 ml = pandas.read_csv(mining_locations)
-
+ml = ml.dropna()
 
 ### construct filename accoring to gid
 def construct_gid_str(save_to, mine_id, bands_id, bb_size, region_id, file_id):

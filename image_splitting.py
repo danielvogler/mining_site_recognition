@@ -10,7 +10,7 @@ from shutil import copyfile
 from global_parameters import *
 
 ### basic information
-# execute this script in a folder containing raw images 
+# execute this script in a folder containing raw images
 # the files are sorted into a new folder named after the raw image folder in the project directory
 dataDir = os.getcwd()
 baseDir = os.path.dirname(os.path.realpath(__file__))
@@ -60,15 +60,26 @@ for category in nameDir:
     catDir = os.path.join(dataDir, category)
     print("\t\t Number of pictures found: {}\n\n".format( len( os.listdir( catDir ) ) ))
 
+    test_val_sort = 0
+
     for file in os.listdir(catDir):
 
         filename = os.fsdecode(file)
 
         if filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".JPG"):
-            numPics +=1
-            if numPics % percentage == 0: #put in testing
 
-                copyfile(os.path.join(catDir, filename), os.path.join(mainDir, "testing", category, filename))
+            ### sort equally into testing and validation
+            numPics +=1
+            
+            if numPics % percentage == 0: #put in testing
+                test_val_sort += 1
+
+                ### split test and validation images
+                if (test_val_sort % 2) == 0:
+                    copyfile(os.path.join(catDir, filename), os.path.join(mainDir, "validation", category, filename))
+                else:
+                    copyfile(os.path.join(catDir, filename), os.path.join(mainDir, "testing", category, filename))
+
             else:   #put in training
                 copyfile(os.path.join(catDir, filename), os.path.join(mainDir, "training", category, filename))
 

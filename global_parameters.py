@@ -30,6 +30,7 @@ target_size = (img_width, img_height)
 projectImages = str( str(file_path) + "/")
 trainingImages = str(projectImages + "training/")
 testingImages = str(projectImages + "testing/")
+validationImages = str(projectImages + "validation/")
 augmentedImages = str(projectImages + "training/")
 save_augmented_images_TF = False
 subDirectories = ['Mine', 'NotMine']
