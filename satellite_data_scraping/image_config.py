@@ -26,4 +26,4 @@ region_id = 'd'
 categories = [0, 1]
 
 ### save folder
-save_to = "../../mining_site_recognition_internal/mining_locations/mining_location_image_files/mining_database_-_western_australia_reduced/"
+save_to = "../../mining_site_recognition_internal/mining_locations/mining_location_image_files/mining_database_-_western_australia_reduced/original_data/"

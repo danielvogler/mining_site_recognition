@@ -194,7 +194,7 @@ def request_image(lat,lon,bands,resolution,bb_size,file_str):
 # loop over the mine locations
 for i in range(len(ml['Latitude'])):
 
-    print("\nLoading coordinates:", i+1)
+    print("\nLoading coordinate index:", ml.index[i])
 
     ### mines and non-mines
     for j in categories:
@@ -209,8 +209,8 @@ for i in range(len(ml['Latitude'])):
 
         ### options for mine/non-mine
         mine_id = str(j)
-        ### count images in region
-        file_id = str(i).zfill(4)
+        ### image index in region
+        file_id = str(ml.index[i]).zfill(4)
         ### gid string for database
         gid_str = construct_gid_str(save_to, mine_id, bands_id, bb_size, region_id, file_id)
 
