@@ -8,7 +8,9 @@ file_path = pathlib.Path(__file__).parent.absolute()
 ###
 ### image sorting (training/test/validation)
 ###
-percentage = 4 ### decide every nth image that will be sorted to testing
+validation_split = 0.2 
+test_split = 0.1
+training_split = 1 - validation_split - test_split
 
 ###
 ### input properties
